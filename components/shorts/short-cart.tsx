@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { Prisma } from "@prisma/client";
-import { Card, CardFooter } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Play, Pause, Heart, MessageCircle, X, Send, Volume2, VolumeX } from "lucide-react";
 import { toggleLike } from "@/actions/like-short";

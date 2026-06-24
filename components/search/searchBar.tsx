@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Input } from "../ui/input";
 
+// ✅ SearchResult Type Define Karo
 type SearchResult = {
   id: string;
   title: string;
@@ -15,21 +16,26 @@ type SearchResult = {
 };
 
 export default function SearchBar() {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
-  const router = useRouter();
   const searchRef = useRef<HTMLDivElement>(null);
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
-  // Search on type
+  // Search with debounce
   useEffect(() => {
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+
     if (!query.trim()) {
       setResults([]);
       return;
     }
 
-    const timer = setTimeout(async () => {
+    debounceTimer.current = setTimeout(async () => {
       setLoading(true);
       try {
         const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
@@ -37,15 +43,20 @@ export default function SearchBar() {
         setResults(data);
       } catch (error) {
         console.error("Search failed:", error);
+        setResults([]);
       } finally {
         setLoading(false);
       }
-    }, 300); // 300ms delay
+    }, 300);
 
-    return () => clearTimeout(timer);
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
   }, [query]);
 
-  // Close results on outside click
+  // Click outside handler
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -93,7 +104,7 @@ export default function SearchBar() {
         )}
       </form>
 
-      {/* Search Results Dropdown */}
+      {/* Results Dropdown */}
       {showResults && results.length > 0 && (
         <div className="absolute top-full mt-2 w-full bg-popover rounded-xl shadow-2xl border border-border overflow-hidden z-50">
           {loading ? (
