@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition, useEffect } from "react";
+import { useRef, useState, useTransition } from "react";
 import { Prisma } from "@prisma/client";
 import { Card, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -38,7 +38,7 @@ type ShortCardProps = {
 
 export default function ShortCard({ short }: ShortCardProps) {
   const router = useRouter();
-  const { user, isLoaded } = useUser(); // ✅ isLoaded bhi add karo
+  const { user, isLoaded } = useUser();
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -50,28 +50,20 @@ export default function ShortCard({ short }: ShortCardProps) {
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   
-  // ✅ Fix: user loaded hone ke baad state set karo
+  // ✅ Direct compute - No useEffect needed (ESLint fix)
   const [localLikes, setLocalLikes] = useState(short.likes.length);
-  const [hasLiked, setHasLiked] = useState(false);
+  const hasLiked = isLoaded && user 
+    ? short.likes.some(like => like.userId === user.id) 
+    : false;
 
-  // ✅ useEffect se initialize karo jab user load ho
-  useEffect(() => {
-    if (isLoaded && user) {
-      const liked = short.likes.some(like => like.userId === user.id);
-      setHasLiked(liked);
-    }
-  }, [isLoaded, user, short.likes]);
-
-  // ✅ FAST LIKE HANDLER
+  // ✅ FAST LIKE HANDLER - Instant update
   const handleLike = async () => {
     if (!user) return;
 
     // Instant UI update
     if (hasLiked) {
-      setHasLiked(false);
       setLocalLikes(prev => prev - 1);
     } else {
-      setHasLiked(true);
       setLocalLikes(prev => prev + 1);
     }
 
@@ -81,7 +73,6 @@ export default function ShortCard({ short }: ShortCardProps) {
     } catch (error) {
       console.error("Like failed:", error);
       // Revert on error
-      setHasLiked(!hasLiked);
       setLocalLikes(prev => hasLiked ? prev + 1 : prev - 1);
     }
   };
