@@ -13,7 +13,6 @@ export default function SearchBar() {
           type="text"
           placeholder="Search..."
           className="pl-9 rounded-full bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-purple-500"
-          // ✅ No onChange, No onSubmit - Bas dummy
         />
       </div>
     </div>

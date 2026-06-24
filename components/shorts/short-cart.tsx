@@ -50,13 +50,13 @@ export default function ShortCard({ short }: ShortCardProps) {
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   
-  // ✅ Direct compute - No useEffect needed (ESLint fix)
+  // ✅ Direct compute - No useEffect needed
   const [localLikes, setLocalLikes] = useState(short.likes.length);
   const hasLiked = isLoaded && user 
     ? short.likes.some(like => like.userId === user.id) 
     : false;
 
-  // ✅ FAST LIKE HANDLER - Instant update
+  // ✅ FAST LIKE HANDLER
   const handleLike = async () => {
     if (!user) return;
 
@@ -67,12 +67,10 @@ export default function ShortCard({ short }: ShortCardProps) {
       setLocalLikes(prev => prev + 1);
     }
 
-    // Background API call
     try {
       await toggleLike(short.id);
     } catch (error) {
       console.error("Like failed:", error);
-      // Revert on error
       setLocalLikes(prev => hasLiked ? prev + 1 : prev - 1);
     }
   };

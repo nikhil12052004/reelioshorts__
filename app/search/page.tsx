@@ -45,7 +45,7 @@ export default async function SearchPage({
       <div className="flex items-center gap-3 mb-6">
         <Search className="h-6 w-6 text-muted-foreground" />
         <h1 className="text-2xl font-bold">
-          Results for "{query}"
+          Results for: {query}
         </h1>
         <span className="text-sm text-muted-foreground">
           ({results.length} videos)

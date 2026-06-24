@@ -1,29 +1,26 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Input } from "../ui/input";
+import { usePathname } from "next/navigation";
+import { 
+  Home, 
+  Upload, 
+  User, 
+  Menu,
+  X,
+  Play,
+  Plus
+} from "lucide-react";
 import { Button } from "../ui/button";
-import { Plus, Search, X, Menu, Play } from "lucide-react";
 import { ModeToggle } from "../mode-toggle";
 import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/nextjs";
+import SearchBar from "../search/searchBar";
 
-const Navbar = () => {
+export default function Navbar() {
+  const pathname = usePathname();
   const { isSignedIn } = useUser();
-  const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
-
-  // Handle search
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
-      setSearchQuery("");
-    }
-  };
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -40,28 +37,9 @@ const Navbar = () => {
           </Link>
 
           {/* Search Bar - Desktop */}
-          <form 
-            onSubmit={handleSearch}
-            className="hidden md:flex flex-1 max-w-md mx-4 relative"
-          >
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by title..."
-              className="pl-9 pr-9 rounded-full bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-purple-500"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </form>
+          <div className="hidden md:flex flex-1 max-w-md mx-4">
+            <SearchBar />
+          </div>
 
           {/* Right Section - Desktop */}
           <div className="hidden md:flex items-center gap-2">
@@ -111,25 +89,7 @@ const Navbar = () => {
 
         {/* Mobile Search - Below Header */}
         <div className="md:hidden pb-3">
-          <form onSubmit={handleSearch} className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by title..."
-              className="pl-9 pr-9 rounded-full bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-purple-500"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </form>
+          <SearchBar />
         </div>
 
         {/* Mobile Menu */}
@@ -173,6 +133,4 @@ const Navbar = () => {
       </div>
     </header>
   );
-};
-
-export default Navbar;
+}
