@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition, useEffect } from "react";
 import { Prisma } from "@prisma/client";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -50,35 +50,37 @@ export default function ShortCard({ short }: ShortCardProps) {
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   
-  // ✅ Direct compute - No useEffect needed
   const [localLikes, setLocalLikes] = useState(short.likes.length);
-  const hasLiked = isLoaded && user 
-    ? short.likes.some(like => like.userId === user.id) 
-    : false;
+  const [hasLiked, setHasLiked] = useState(false);
+  const [isLikeProcessing, setIsLikeProcessing] = useState(false);
 
-  // ✅ FAST LIKE HANDLER
-  const handleLike = async () => {
-    if (!user) return;
-
-    // Instant UI update
-    if (hasLiked) {
-      setLocalLikes(prev => prev - 1);
-    } else {
-      setLocalLikes(prev => prev + 1);
+  useEffect(() => {
+    if (isLoaded && user) {
+      const liked = short.likes.some(like => like.userId === user.id);
+      setHasLiked(liked);
     }
+  }, [isLoaded, user, short.likes]);
 
+  const handleLike = async () => {
+    if (!user || isLikeProcessing) return;
+    setIsLikeProcessing(true);
+    const newHasLiked = !hasLiked;
+    setHasLiked(newHasLiked);
+    setLocalLikes(prev => newHasLiked ? prev + 1 : prev - 1);
     try {
       await toggleLike(short.id);
     } catch (error) {
       console.error("Like failed:", error);
-      setLocalLikes(prev => hasLiked ? prev + 1 : prev - 1);
+      setHasLiked(!newHasLiked);
+      setLocalLikes(prev => newHasLiked ? prev - 1 : prev + 1);
+    } finally {
+      setIsLikeProcessing(false);
     }
   };
 
   const togglePlay = () => {
     const video = videoRef.current;
     if (!video) return;
-
     if (video.paused) {
       video.play();
       setIsPlaying(true);
@@ -99,7 +101,6 @@ export default function ShortCard({ short }: ShortCardProps) {
   const handleAddComment = async (formData: FormData) => {
     const comment = formData.get("comment")?.toString();
     if (!comment?.trim()) return;
-
     startTransition(async () => {
       await addComment(short.id, formData);
       setCommentText("");
@@ -109,26 +110,32 @@ export default function ShortCard({ short }: ShortCardProps) {
 
   return (
     <Card className="relative h-[640px] w-[360px] overflow-hidden rounded-xl border-0 p-0 shadow-2xl bg-black">
-      {/* Video */}
-      <video
-        ref={videoRef}
-        src={short.videoUrl}
-        playsInline
-        preload="metadata"
-        onClick={togglePlay}
-        onTimeUpdate={(e) => {
-          const video = e.currentTarget;
-          setProgress((video.currentTime / video.duration) * 100);
-        }}
-        onLoadedMetadata={(e) => {
-          const video = e.currentTarget;
-          setDuration(video.duration);
-          setVideoLoaded(true);
-        }}
-        onCanPlay={() => setVideoLoaded(true)}
-        className="absolute inset-0 h-full w-full object-cover z-0"
-        muted={isMuted}
-      />
+      {/* ✅ VIDEO CONTAINER - FIXED */}
+      <div className="absolute inset-0 w-full h-full bg-black">
+        <video
+          ref={videoRef}
+          src={short.videoUrl}
+          playsInline
+          preload="metadata"
+          onClick={togglePlay}
+          onTimeUpdate={(e) => {
+            const video = e.currentTarget;
+            setProgress((video.currentTime / video.duration) * 100);
+          }}
+          onLoadedMetadata={(e) => {
+            const video = e.currentTarget;
+            setDuration(video.duration);
+            setVideoLoaded(true);
+          }}
+          onCanPlay={() => setVideoLoaded(true)}
+          className="w-full h-full object-contain"
+          muted={isMuted}
+          style={{
+            display: 'block',
+            backgroundColor: '#000',
+          }}
+        />
+      </div>
 
       {/* Loading Spinner */}
       {!videoLoaded && (
@@ -138,12 +145,12 @@ export default function ShortCard({ short }: ShortCardProps) {
       )}
 
       {/* Gradient Overlays */}
-      <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
-      <div className="absolute bottom-0 left-0 right-0 h-[40%] z-10 bg-gradient-to-t from-black/90 via-black/30 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-[50%] z-10 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
 
       {/* Duration Badge */}
       {duration > 0 && (
-        <div className="absolute bottom-20 right-3 z-20 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded backdrop-blur-sm pointer-events-none">
+        <div className="absolute top-3 right-3 z-20 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded backdrop-blur-sm">
           {Math.floor(duration)}s
         </div>
       )}
@@ -171,7 +178,7 @@ export default function ShortCard({ short }: ShortCardProps) {
       {/* Mute/Unmute Button */}
       <button
         onClick={toggleMute}
-        className="absolute top-3 right-3 z-30 bg-black/50 text-white p-2 rounded-full backdrop-blur-sm hover:bg-black/70 transition-all"
+        className="absolute top-3 right-12 z-30 bg-black/50 text-white p-2 rounded-full backdrop-blur-sm hover:bg-black/70 transition-all"
       >
         {isMuted ? (
           <VolumeX className="h-4 w-4" />
@@ -189,7 +196,7 @@ export default function ShortCard({ short }: ShortCardProps) {
       </div>
 
       {/* User Info */}
-      <div className="absolute bottom-6 left-3 right-20 z-30">
+      <div className="absolute bottom-14 left-3 right-20 z-30">
         <div className="flex items-center gap-2 mb-1">
           <Avatar className="h-8 w-8 border-2 border-white/20 flex-shrink-0">
             <AvatarImage src="" alt="channel owner" />
@@ -216,36 +223,34 @@ export default function ShortCard({ short }: ShortCardProps) {
       </div>
 
       {/* Like & Comment Buttons */}
-      <div className="absolute bottom-16 right-3 z-30 flex flex-col items-center gap-4">
-        {/* Like Button */}
+      <div className="absolute bottom-14 right-3 z-30 flex flex-col items-center gap-4">
         <button
           onClick={handleLike}
+          disabled={isLikeProcessing || !user}
           className="flex flex-col items-center text-white group relative"
         >
           <div className="relative">
             <Heart 
               className={`
-                h-7 w-7 transition-all duration-150 ease-out
+                h-7 w-7 transition-all duration-200 ease-out
                 ${hasLiked 
                   ? 'fill-red-500 text-red-500 scale-110' 
                   : 'text-white group-hover:scale-110'
                 }
+                ${isLikeProcessing ? 'opacity-50' : ''}
               `}
             />
-            
             {hasLiked && (
               <div className="absolute inset-0">
                 <div className="absolute inset-0 rounded-full bg-red-500/30 animate-ripple-ring" />
               </div>
             )}
           </div>
-          
           <span className="text-xs text-white/80 transition-all duration-150">
             {localLikes}
           </span>
         </button>
 
-        {/* Comments Button */}
         <button
           onClick={() => setShowComments(!showComments)}
           className="flex flex-col items-center text-white group"
@@ -258,7 +263,7 @@ export default function ShortCard({ short }: ShortCardProps) {
       {/* Comment Input */}
       <form
         action={handleAddComment}
-        className="absolute bottom-2 left-3 right-12 z-30 flex gap-2"
+        className="absolute bottom-2 left-3 right-12 z-40 flex gap-2"
       >
         <Input
           name="comment"

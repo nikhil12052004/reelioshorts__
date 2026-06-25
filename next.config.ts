@@ -1,13 +1,23 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // ✅ Server Actions body size limit
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '100mb',
+    },
+  },
+  
+  // ✅ Images domains
+  images: {
+    domains: ['ik.imagekit.io', 'res.cloudinary.com'],
+  },
+  
+  // ✅ Build errors ignore (temporary)
   eslint: {
-    ignoreDuringBuilds: true, // ✅ Build ke time ESLint errors ignore
+    ignoreDuringBuilds: true,
   },
   typescript: {
-    ignoreBuildErrors: true, // ✅ TypeScript errors ignore
-  },
-  images: {
-    domains: ['ik.imagekit.io'],
+    ignoreBuildErrors: true,
   },
 };
 
