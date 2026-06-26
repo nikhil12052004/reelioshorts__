@@ -94,11 +94,7 @@ export default function UploadPage() {
       formData.append("file", file);
       formData.append("upload_preset", "reelioshorts");
 
-      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-
-      if (!cloudName) {
-        throw new Error("Cloudinary cloud name is missing.");
-      }
+      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "dvhzsdabc";
 
       const cloudinaryRes = await fetch(
         `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`,
