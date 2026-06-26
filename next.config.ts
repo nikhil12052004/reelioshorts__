@@ -1,23 +1,25 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  // ✅ Server Actions body size limit
+import type { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
       bodySizeLimit: '100mb',
     },
   },
-  
-  // ✅ Images domains
   images: {
     domains: ['ik.imagekit.io', 'res.cloudinary.com'],
   },
-  
-  // ✅ Build errors ignore (temporary)
   eslint: {
     ignoreDuringBuilds: true,
   },
   typescript: {
     ignoreBuildErrors: true,
+  },
+  webpack: (config: any, { isServer }: { isServer: boolean }) => {
+    if (isServer) {
+      config.externals = [...config.externals, '@prisma/client'];
+    }
+    return config;
   },
 };
 

@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import  prisma  from "@/lib/prisma";
 import { currentUser } from "@clerk/nextjs/server";
 import ShortCard from "@/components/shorts/short-cart";
 import { EmptyState } from "@/components/ui/empty-state";

@@ -20,31 +20,32 @@ model User {
   comments    Comment[]
 }
 
-model Like {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-
-  userId    String
-  shortId   String
-
-  user      User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  short     Short @relation(fields: [shortId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, shortId])
-}
-
 model Short {
   id          String   @id @default(cuid())
   title       String
-  description String
+  description String?
   videoUrl    String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   userId      String
-  user        User @relation(fields: [userId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   likes       Like[]
   comments    Comment[]
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  shortId   String
+  short     Short    @relation(fields: [shortId], references: [id], onDelete: Cascade)
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, shortId])
 }
 
 model Comment {
@@ -52,9 +53,9 @@ model Comment {
   text      String
   createdAt DateTime @default(now())
 
-  userId    String
   shortId   String
+  short     Short    @relation(fields: [shortId], references: [id], onDelete: Cascade)
 
-  user      User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  short     Short @relation(fields: [shortId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
